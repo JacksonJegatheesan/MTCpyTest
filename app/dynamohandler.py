@@ -1,4 +1,5 @@
 import boto3
+from boto3.dynamodb.conditions import Attr
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('images')
@@ -47,3 +48,33 @@ def delete_metadata_from_dynamodb(image_id: str):
     except Exception as e:
         print(f"Error deleting metadata: {e}")
         return False
+
+
+def search_images(
+    filename: str = None,
+    title: str = None,
+    description: str = None,
+    tag: str = None
+):
+    print(filename, title, description)
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('images')
+
+    filter_expr = None
+
+    if filename:
+        filter_expr = Attr("filename").contains(filename)
+    if title:
+        expr = Attr("title").contains(title)
+    if description:
+        expr = Attr("description").contains(description)
+    if tag:
+        expr = Attr("tags").contains(tag)
+
+    try:
+        response = table.scan(FilterExpression=filter_expr) if filter_expr else table.scan()
+        print(response)
+        return response.get("Items", [])
+    except Exception as e:
+        print(f"Error searching items: {e}")
+        return []

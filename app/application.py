@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import FileResponse
 from typing import List, Optional
 from pydantic import BaseModel
@@ -7,7 +7,7 @@ from uuid import uuid4
 import shutil
 from models import ImageMeta
 from s3handler import upload_image_to_s3, delete_file_from_s3
-from dynamohandler import save_image_metadata_to_dynamodb, list_all_items, delete_metadata_from_dynamodb, get_image_by_id
+from dynamohandler import save_image_metadata_to_dynamodb, list_all_items, delete_metadata_from_dynamodb, get_image_by_id, search_images
 
 app = FastAPI()
 
@@ -58,6 +58,15 @@ def delete_image(image_id: str):
     delete_file_from_s3(UPLOAD_FOLDER, image["filename"] )
     delete_metadata_from_dynamodb(image_id)
     return image
+
+@app.get("/search")
+def search_images_endpoint(
+    filename: Optional[str]=None,
+    title: Optional[str]=None,
+    description: Optional[str]=None,
+    tag: Optional[str]=None
+):
+    return search_images(filename=filename, title=title, description=description, tag=tag)
 
 if __name__ == "__main__":
     app.run()

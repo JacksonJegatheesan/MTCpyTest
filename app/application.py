@@ -5,6 +5,8 @@ from typing import List, Optional
 from pydantic import BaseModel
 from uuid import uuid4
 import shutil
+from models import ImageMeta
+from s3handler import upload_image_to_s3, delete_file_from_s3
 
 app = FastAPI()
 
@@ -13,13 +15,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # In-memory metadata storage
 image_store: List[dict] = []
-
-class ImageMeta(BaseModel):
-    id: str
-    filename: str
-    title: str
-    description: str
-    tags: List[str]
 
 @app.post("/upload/", response_model=ImageMeta)
 async def upload_image(
@@ -34,6 +29,8 @@ async def upload_image(
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    upload_image_to_s3(file.file,UPLOAD_FOLDER,filename)
 
     metadata = {
         "id": image_id,
@@ -65,6 +62,7 @@ def delete_image(image_id: str):
         raise HTTPException(status_code=404, detail="Image not found")
 
     file_path = os.path.join(UPLOAD_FOLDER, image["filename"])
+    delete_file_from_s3(UPLOAD_FOLDER, image["filename"] )
     if os.path.exists(file_path):
         os.remove(file_path)
 

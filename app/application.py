@@ -67,6 +67,3 @@ def search_images_endpoint(
     tag: Optional[str]=None
 ):
     return search_images(filename=filename, title=title, description=description, tag=tag)
-
-if __name__ == "__main__":
-    app.run()
